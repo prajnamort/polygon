@@ -1,0 +1,7 @@
+*.pyc
+*.pdf
+*.bak
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock

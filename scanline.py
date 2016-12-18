@@ -5,7 +5,7 @@ from figures import Polygon, PlainPolygon, Line, Point
 
 def fill_polygon(paint_area, polygon, painter, color=Qt.black):
     if polygon.is_valid():
-        scanline_fill(paint_area, polygon, painter, color=Qt.black)
+        scanline_fill(paint_area=paint_area, polygon=polygon, painter=painter, color=color)
     else:
         painter.setPen(color)
         polygon.draw(painter, color)

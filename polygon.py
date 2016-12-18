@@ -62,7 +62,9 @@ class PLGMainWidget(QWidget):
         label1_1 = QLabel('主多边形：')
         label1_1.setMinimumWidth(100)
         self.btn_main_outer = QPushButton('输入多边形')
+        self.btn_main_outer.clicked.connect(self.input_main_outer)
         self.btn_main_inner = QPushButton('输入内环')
+        self.btn_main_inner.clicked.connect(self.input_main_inner)
         self.btn_main_color = QPushButton('选择颜色')
         self.btn_main_color.clicked.connect(self.select_color)
 
@@ -101,6 +103,12 @@ class PLGMainWidget(QWidget):
         vbox.addLayout(hbox2)
         vbox.addWidget(container_frame)
         self.setLayout(vbox)
+
+    def input_main_outer(self):
+        pass
+
+    def input_main_inner(self):
+        pass
 
     def select_color(self):
         color = QColorDialog.getColor()

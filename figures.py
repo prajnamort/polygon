@@ -12,6 +12,10 @@ class Polygon(object):
             self.inners = []
         self.num_inners = len(self.inners)
 
+    def is_valid(self):
+        """是否为合法的多边形。"""
+        return all([plain_polygon.is_valid for plain_polygon in self.plain_polygons])
+
     @property
     def plain_polygons(self):
         """所有的普通多边形。"""
@@ -46,11 +50,21 @@ class Polygon(object):
 
 
 class PlainPolygon(object):
-    """普通多边形（不带内环）"""
+    """普通多边形（不带内环）
 
-    def __init__(self, vertices):
-        self.vertices = vertices
-        self.num_sides = len(self.vertices)
+    注：可能为非法多边形（边数小于3）
+    """
+
+    def __init__(self, vertices=None):
+        self.vertices = []
+        self.num_sides = 0
+        if vertices:
+            for vertice in vertices:
+                self.insert(-1, vertice)
+
+    def is_valid(self):
+        """是否为合法的多边形。"""
+        return len(self.vertices) >= 3
 
     @property
     def looped_vertices(self):
@@ -67,9 +81,18 @@ class PlainPolygon(object):
         return result
 
     def insert(self, index, vertice):
-        """增加一个新的顶点"""
-        self.vertices.insert(index, vertice)
-        self.num_sides += 1
+        """增加一个新的顶点
+
+        返回值:
+            - 输入成功：新多边形的边数
+            - 输入失败：0
+        """
+        if vertice not in self.vertices:
+            self.vertices.insert(index, vertice)
+            self.num_sides += 1
+            return self.num_sides
+        else:
+            return 0
 
     def __str__(self):
         return ' - '.join([str(vertice) for vertice in self.vertices])

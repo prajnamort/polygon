@@ -8,7 +8,7 @@ from PyQt5.QtGui import QPainter, QColor, QPen
 from PyQt5.QtCore import Qt
 
 from figures import Polygon, PlainPolygon, Line, Point
-from scanline import scanline_fill
+from scanline import fill_polygon
 
 
 class PLGMainWindow(QMainWindow):
@@ -141,7 +141,7 @@ class PLGPaintArea(QLabel):
         polygon = Polygon(plain_polygon1)
         polygon.insert_inner(plain_polygon2)
 
-        scanline_fill(self, polygon, painter=painter, color=self.current_color)
+        fill_polygon(self, polygon, painter=painter, color=self.current_color)
 
         print('-------------------------------------------------')
 

@@ -3,7 +3,18 @@ from PyQt5.QtCore import Qt, QLineF, QPointF
 from figures import Polygon, PlainPolygon, Line, Point
 
 
+def fill_polygon(paint_area, polygon, painter, color=Qt.black):
+    if polygon.is_valid():
+        scanline_fill(paint_area, polygon, painter, color=Qt.black)
+    else:
+        painter.setPen(color)
+        polygon.draw(painter, color)
+
+
 def scanline_fill(paint_area, polygon, painter, color=Qt.black):
+    if not polygon.is_valid():
+        raise Exception('多边形不合法，无法使用扫描线填充')
+
     painter.setPen(color)
     area_width = paint_area.width()
     area_height = paint_area.height()

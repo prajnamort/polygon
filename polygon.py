@@ -27,8 +27,8 @@ class PLGMainWindow(QMainWindow):
 
     def resize_and_center(self):
         """调整窗口大小并居中"""
-        self.resize(int(QDesktopWidget().width() * 0.618),
-                    int(QDesktopWidget().height() * 0.618))
+        self.setFixedSize(int(QDesktopWidget().width() * 0.618),
+                          int(QDesktopWidget().height() * 0.618))
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)

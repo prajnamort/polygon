@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt, QLineF, QPointF
 
-from figures import Polygon, PlainPolygon, Line, Point
+from figures import Polygon, PlainPolygon, Line, Point, PLGFloat
+from utils import count_list
 
 
 def fill_polygon(paint_area, polygon, painter, color=Qt.black):
@@ -27,40 +28,44 @@ def scanline_fill(paint_area, polygon, painter, color=Qt.black):
         xline = QLineF(area_xmin, ynow, area_xmax, ynow)
 
         # 求交点
-        xs = []
+        points = []
         sides = []
         for side in polygon.sides:
-            point = QPointF()
+            point = Point()
             intersect_type = side.intersect(xline, point)
             if intersect_type == QLineF.BoundedIntersection:
-                xs.append(point.x())
+                points.append(point)
                 sides.append(side)
 
+        if ynow in [61, 62, 63, 64, 65, 66, 67]:
+            print(points)
+
         # 重复交点处理
-        unique_xs = list(set(xs))
-        for i in range(len(unique_xs)):
-            x = unique_xs[i]
-            count = xs.count(x)
+        for point, count in count_list(points):
             if count == 1:
                 continue
             elif count == 2:
-                index1 = xs.index(x)
-                index2 = xs.index(x, index1 + 1)
+                index1 = points.index(point)
+                index2 = points.index(point, index1 + 1)
                 side1 = sides[index1]
                 side2 = sides[index2]
-                point = Point(x, ynow)
                 another_y1 = side1.get_another_vertice(point).y()
                 another_y2 = side2.get_another_vertice(point).y()
                 if (another_y1 - ynow) * (another_y2 - ynow) < 0:  # 异侧：只留一个交点
-                    xs.remove(x)
+                    points.remove(point)
             else:
                 raise Exception('交点个数不合法')
 
         # 交点排序、配对，线段涂色
-        xs = sorted(xs)
-        for i in range(0, len(xs), 2):
-            point1 = Point(xs[i], ynow)
-            point2 = Point(xs[i + 1], ynow)
+        points = sorted(points, key=lambda p: p.x())
+        for i in range(0, len(points), 2):
+            point1 = points[i]
+            try:
+                point2 = points[i+1]
+            except:
+                print(points)
+                print(polygon.sides)
+                raise
             painter.drawLine(point1, point2)
 
     # 再单独画一次边框

@@ -159,9 +159,25 @@ class PLGPaintArea(QLabel):
         self.setStyleSheet("background-color: white")
         self.setCursor(Qt.CrossCursor)
 
+        point1 = Point(229, 43)
+        point2 = Point(273, 225)
+        point3 = Point(736, 307)
+        plain_polygon1 = PlainPolygon([point1, point2, point3])
+        self.main_polygon = Polygon(plain_polygon1)
+
+        # point1 = Point(254, 379)
+        # point2 = Point(527, 309)
+        # point3 = Point(508, 430)
+        # plain_polygon1 = PlainPolygon([point1, point2, point3])
+        # self.main_polygon = Polygon(plain_polygon1)
+
     @property
     def main_polygon(self):
         return self.main_widget.main_polygon
+
+    @main_polygon.setter
+    def main_polygon(self, polygon):
+        self.main_widget.main_polygon = polygon
 
     @property
     def cutter_polygon(self):
@@ -174,19 +190,6 @@ class PLGPaintArea(QLabel):
         painter.end()
 
     def draw_polygon(self, painter):
-        # point1 = Point(20, 20)
-        # point2 = Point(20, 200)
-        # point3 = Point(200, 200)
-        # point4 = Point(200, 20)
-        # point5 = Point(110, 40)
-        # point6 = Point(180, 120)
-        # point7 = Point(40, 180)
-        # plain_polygon1 = PlainPolygon([point1, point2, point3, point4])
-        # plain_polygon2 = PlainPolygon([point5, point6, point7])
-        # polygon = Polygon(plain_polygon1)
-        # polygon.insert_inner(plain_polygon2)
-        # fill_polygon(self, polygon, painter=painter, color=self.current_color)
-
         if self.main_polygon:
             fill_polygon(self, self.main_polygon, painter=painter, color=self.current_color)
 
@@ -199,9 +202,11 @@ class PLGPaintArea(QLabel):
         x = event.x()
         y = event.y()
         if self.main_widget.state == PLGState.INPUT_MAIN_OUTER:
+            print(x, y)
             self.main_polygon.outer.insert(-1, Point(x, y))
             self.repaint()
         elif self.main_widget.state == PLGState.INPUT_MAIN_INNER:
+            print(x, y)
             self.main_polygon.inners[-1].insert(-1, Point(x, y))
             self.repaint()
 
@@ -209,9 +214,9 @@ class PLGPaintArea(QLabel):
         x = event.x()
         y = event.y()
         if self.main_widget.state == PLGState.INPUT_MAIN_OUTER:
-            print(x, y)
+            pass
         elif self.main_widget.state == PLGState.INPUT_MAIN_INNER:
-            print(x, y)
+            pass
 
 
 if __name__ == '__main__':

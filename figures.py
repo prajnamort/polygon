@@ -1,5 +1,7 @@
 from PyQt5.QtCore import Qt, QLineF, QPointF, QLine, QPoint
 
+from utils import isclose
+
 
 class Polygon(object):
     """多边形（带内环）"""
@@ -132,6 +134,36 @@ class Point(QPointF):
     def __str__(self):
         return '(%s, %s)' % (self.x(), self.y())
 
+    def __eq__(self, other):
+        return (self.x() == other.x() and self.y() == other.y())
+
     def draw(self, painter, color=Qt.black):
         painter.setPen(color)
         painter.drawPoint(self.x(), self.y())
+
+    def x(self):
+        return PLGFloat(super().x())
+
+    def y(self):
+        return PLGFloat(super().y())
+
+
+class PLGFloat(float):
+
+    def __lt__(self, other):
+        return super().__lt__(other) and not isclose(self, other)
+
+    def __gt__(self, other):
+        return super().__gt__(other) and not isclose(self, other)
+
+    def __eq__(self, other):
+        return isclose(self, other)
+
+    def __le__(self, other):
+        return super().__le__(other) or isclose(self, other)
+
+    def __ge__(self, other):
+        return super().__ge__(other) or isclose(self, other)
+
+    def __ne__(self, other):
+        return not isclose(self, other)

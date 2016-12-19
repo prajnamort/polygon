@@ -18,7 +18,7 @@ class PLGMainWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.main_widget = PLGMainWidget()
+        self.main_widget = PLGMainWidget(self)
         self.setCentralWidget(self.main_widget)
         self.resize_and_center()
         self.setWindowTitle('Polygon')
@@ -47,13 +47,14 @@ class PLGMainWidget(QWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.main_window = self.parent()
         self.main_polygon = None
         self.cutter_polygon = None
         self.state = PLGState.NORMAL
         self.initUI()
 
     def initUI(self):
-        self.paint_area = PLGPaintArea(main_widget=self)
+        self.paint_area = PLGPaintArea(self)
         container_frame = QFrame()
         container_frame.setFrameShape(QFrame.StyledPanel)
         container_box = QHBoxLayout()
@@ -108,6 +109,9 @@ class PLGMainWidget(QWidget):
         vbox.addWidget(container_frame)
         self.setLayout(vbox)
 
+    def showMessage(self, message):
+        self.main_window.statusBar().showMessage(message)
+
     def input_main_outer(self, pressed):
         if pressed:
             if self.state == PLGState.NORMAL:
@@ -149,21 +153,16 @@ class PLGMainWidget(QWidget):
 
 class PLGPaintArea(QLabel):
 
-    def __init__(self, main_widget, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.main_widget = main_widget
+        self.main_window = self.parent().parent()
+        self.main_widget = self.parent()
         self.current_color = Qt.black
         self.initUI()
 
     def initUI(self):
         self.setStyleSheet("background-color: white")
         self.setCursor(Qt.CrossCursor)
-
-        point1 = Point(229, 43)
-        point2 = Point(273, 225)
-        point3 = Point(736, 307)
-        plain_polygon1 = PlainPolygon([point1, point2, point3])
-        self.main_polygon = Polygon(plain_polygon1)
 
         # point1 = Point(254, 379)
         # point2 = Point(527, 309)
@@ -183,6 +182,10 @@ class PLGPaintArea(QLabel):
     def cutter_polygon(self):
         return self.main_widget.cutter_polygon
 
+    @cutter_polygon.setter
+    def cutter_polygon(self, polygon):
+        self.main_widget.cutter_polygon = polygon
+
     def paintEvent(self, e):
         painter = QPainter()
         painter.begin(self)
@@ -198,16 +201,20 @@ class PLGPaintArea(QLabel):
 
         print('-------------------------------------------------')
 
+    def showMessage(self, message):
+        self.main_window.statusBar().showMessage(message)
+
     def mousePressEvent(self, event):
         x = event.x()
         y = event.y()
+        print(x, y)
         if self.main_widget.state == PLGState.INPUT_MAIN_OUTER:
-            print(x, y)
-            self.main_polygon.outer.insert(-1, Point(x, y))
+            success, message = self.main_polygon.outer.insert(-1, Point(x, y))
+            self.showMessage(message)
             self.repaint()
         elif self.main_widget.state == PLGState.INPUT_MAIN_INNER:
-            print(x, y)
-            self.main_polygon.inners[-1].insert(-1, Point(x, y))
+            success, message = self.main_polygon.inners[-1].insert(-1, Point(x, y))
+            self.showMessage(message)
             self.repaint()
 
     def mouseReleaseEvent(self, event):

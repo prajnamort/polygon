@@ -62,7 +62,6 @@ class PlainPolygon(object):
 
     def __init__(self, vertices=None):
         self.vertices = []
-        self.num_sides = 0
         if vertices:
             for vertice in vertices:
                 self.insert(-1, vertice)
@@ -78,6 +77,10 @@ class PlainPolygon(object):
         return result
 
     @property
+    def num_sides(self):
+        return len(self.vertices)
+
+    @property
     def sides(self):
         """所有的边"""
         result = []
@@ -85,19 +88,32 @@ class PlainPolygon(object):
             result.append(Line(self.looped_vertices[i], self.looped_vertices[i+1]))
         return result
 
-    def insert(self, index, vertice):
+    def insert(self, index, point):
         """增加一个新的顶点
 
         返回值:
-            - 输入成功：新多边形的边数
-            - 输入失败：0
+            success (bool), message (str)
         """
-        if vertice not in self.vertices:
-            self.vertices.insert(index, vertice)
-            self.num_sides += 1
-            return self.num_sides
+        if point in self.vertices:
+            return False, '输入失败：顶点不允许重合'
+
+        if self.num_sides >= 2:
+            pairs = [(Line(self.vertices[-1], point), self.vertices[-1]),
+                     (Line(point, self.vertices[0]), self.vertices[0])]
+        elif self.num_sides == 1:
+            pairs = [(Line(self.vertices[-1], point), self.vertices[-1])]
         else:
-            return 0
+            pairs = []
+
+        for line, vertice in pairs:
+            for side in self.sides:
+                intersect_point = Point()
+                intersect_type = side.intersect(line, intersect_point)
+                if intersect_type == QLineF.BoundedIntersection:
+                    pass  # TMP
+
+        self.vertices.insert(index, point)
+        return True, '输入成功：%s' % point
 
     def __str__(self):
         return ' - '.join([str(vertice) for vertice in self.vertices])
@@ -118,14 +134,33 @@ class Line(QLineF):
         painter.drawLine(self.x1(), self.y1(), self.x2(), self.y2())
 
     def get_another_vertice(self, vertice):
-        p1 = Point(self.p1())
-        p2 = Point(self.p2())
+        p1 = self.p1()
+        p2 = self.p2()
+        vertice = Point(vertice)
         if vertice == p1:
             return p2
         elif vertice == p2:
             return p1
         else:
             raise Exception('指定点并非该线段的顶点')
+
+    def p1(self):
+        return Point(super().p1())
+
+    def p2(self):
+        return Point(super().p2())
+
+    def x1(self):
+        return PLGFloat(super().x1())
+
+    def y1(self):
+        return PLGFloat(super().y1())
+
+    def x2(self):
+        return PLGFloat(super().x2())
+
+    def y2(self):
+        return PLGFloat(super().y2())
 
 
 class Point(QPointF):

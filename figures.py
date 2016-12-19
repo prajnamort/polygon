@@ -4,8 +4,11 @@ from PyQt5.QtCore import Qt, QLineF, QPointF, QLine, QPoint
 class Polygon(object):
     """多边形（带内环）"""
 
-    def __init__(self, outer, inners=None):
-        self.outer = outer
+    def __init__(self, outer=None, inners=None):
+        if outer:
+            self.outer = outer
+        else:
+            self.outer = PlainPolygon()
         if inners:
             self.inners = inners
         else:
@@ -14,7 +17,7 @@ class Polygon(object):
 
     def is_valid(self):
         """是否为合法的多边形。"""
-        return all([plain_polygon.is_valid for plain_polygon in self.plain_polygons])
+        return all([plain_polygon.is_valid() for plain_polygon in self.plain_polygons])
 
     @property
     def plain_polygons(self):

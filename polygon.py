@@ -47,11 +47,13 @@ class PLGMainWidget(QWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.main_polygon = None
+        self.cutter_polygon = None
         self.state = PLGState.NORMAL
         self.initUI()
 
     def initUI(self):
-        self.paint_area = PLGPaintArea()
+        self.paint_area = PLGPaintArea(main_widget=self)
         container_frame = QFrame()
         container_frame.setFrameShape(QFrame.StyledPanel)
         container_box = QHBoxLayout()
@@ -62,9 +64,11 @@ class PLGMainWidget(QWidget):
         label1_1 = QLabel('主多边形：')
         label1_1.setMinimumWidth(100)
         self.btn_main_outer = QPushButton('输入多边形')
-        self.btn_main_outer.clicked.connect(self.input_main_outer)
+        self.btn_main_outer.setCheckable(True)
+        self.btn_main_outer.clicked[bool].connect(self.input_main_outer)
         self.btn_main_inner = QPushButton('输入内环')
-        self.btn_main_inner.clicked.connect(self.input_main_inner)
+        self.btn_main_inner.setCheckable(True)
+        self.btn_main_inner.clicked[bool].connect(self.input_main_inner)
         self.btn_main_color = QPushButton('选择颜色')
         self.btn_main_color.clicked.connect(self.select_color)
 
@@ -104,11 +108,37 @@ class PLGMainWidget(QWidget):
         vbox.addWidget(container_frame)
         self.setLayout(vbox)
 
-    def input_main_outer(self):
-        pass
+    def input_main_outer(self, pressed):
+        if pressed:
+            if self.state == PLGState.NORMAL:
+                self.state = PLGState.INPUT_MAIN_OUTER
+                self.main_polygon = Polygon()
+                self.paint_area.repaint()
+            else:
+                raise
+        else:
+            if self.state == PLGState.INPUT_MAIN_OUTER:
+                self.state = PLGState.NORMAL
+                if not self.main_polygon.is_valid():
+                    self.main_polygon = None
+            else:
+                raise
 
-    def input_main_inner(self):
-        pass
+    def input_main_inner(self, pressed):
+        if pressed:
+            if self.state == PLGState.NORMAL:
+                self.state = PLGState.INPUT_MAIN_INNER
+                self.main_polygon.insert_inner(PlainPolygon())
+                # self.paint_area.repaint()
+            else:
+                raise
+        else:
+            if self.state == PLGState.INPUT_MAIN_INNER:
+                self.state = PLGState.NORMAL
+                if not self.main_polygon.inners[-1].is_valid():
+                    self.main_polygon.inners.pop()
+            else:
+                raise
 
     def select_color(self):
         color = QColorDialog.getColor()
@@ -119,14 +149,23 @@ class PLGMainWidget(QWidget):
 
 class PLGPaintArea(QLabel):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, main_widget, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.main_widget = main_widget
         self.current_color = Qt.black
         self.initUI()
 
     def initUI(self):
         self.setStyleSheet("background-color: white")
         self.setCursor(Qt.CrossCursor)
+
+    @property
+    def main_polygon(self):
+        return self.main_widget.main_polygon
+
+    @property
+    def cutter_polygon(self):
+        return self.main_widget.cutter_polygon
 
     def paintEvent(self, e):
         painter = QPainter()
@@ -135,29 +174,44 @@ class PLGPaintArea(QLabel):
         painter.end()
 
     def draw_polygon(self, painter):
-        point1 = Point(20, 20)
-        point2 = Point(20, 200)
-        point3 = Point(200, 200)
-        point4 = Point(200, 20)
-        point5 = Point(110, 40)
-        point6 = Point(180, 120)
-        point7 = Point(40, 180)
+        # point1 = Point(20, 20)
+        # point2 = Point(20, 200)
+        # point3 = Point(200, 200)
+        # point4 = Point(200, 20)
+        # point5 = Point(110, 40)
+        # point6 = Point(180, 120)
+        # point7 = Point(40, 180)
+        # plain_polygon1 = PlainPolygon([point1, point2, point3, point4])
+        # plain_polygon2 = PlainPolygon([point5, point6, point7])
+        # polygon = Polygon(plain_polygon1)
+        # polygon.insert_inner(plain_polygon2)
+        # fill_polygon(self, polygon, painter=painter, color=self.current_color)
 
-        plain_polygon1 = PlainPolygon([point1, point2, point3, point4])
-        plain_polygon2 = PlainPolygon([point5, point6, point7])
+        if self.main_polygon:
+            fill_polygon(self, self.main_polygon, painter=painter, color=self.current_color)
 
-        polygon = Polygon(plain_polygon1)
-        polygon.insert_inner(plain_polygon2)
-
-        fill_polygon(self, polygon, painter=painter, color=self.current_color)
+        if self.cutter_polygon:
+            self.cutter_polygon.draw(painter=painter, color=self.current_color)
 
         print('-------------------------------------------------')
 
-    def mousePressEvent(self, e):
-        print(e.x(), e.y())
+    def mousePressEvent(self, event):
+        x = event.x()
+        y = event.y()
+        if self.main_widget.state == PLGState.INPUT_MAIN_OUTER:
+            self.main_polygon.outer.insert(-1, Point(x, y))
+            self.repaint()
+        elif self.main_widget.state == PLGState.INPUT_MAIN_INNER:
+            self.main_polygon.inners[-1].insert(-1, Point(x, y))
+            self.repaint()
 
-    def mouseReleaseEvent(self, e):
-        print(e.x(), e.y())
+    def mouseReleaseEvent(self, event):
+        x = event.x()
+        y = event.y()
+        if self.main_widget.state == PLGState.INPUT_MAIN_OUTER:
+            print(x, y)
+        elif self.main_widget.state == PLGState.INPUT_MAIN_INNER:
+            print(x, y)
 
 
 if __name__ == '__main__':

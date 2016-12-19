@@ -37,9 +37,6 @@ def scanline_fill(paint_area, polygon, painter, color=Qt.black):
                 points.append(point)
                 sides.append(side)
 
-        if ynow in [61, 62, 63, 64, 65, 66, 67]:
-            print(points)
-
         # 重复交点处理
         for point, count in count_list(points):
             if count == 1:
@@ -66,7 +63,7 @@ def scanline_fill(paint_area, polygon, painter, color=Qt.black):
                 print(points)
                 print(polygon.sides)
                 raise
-            painter.drawLine(point1, point2)
+            painter.drawLine(point1.x(), ynow, point2.x(), ynow)
 
     # 再单独画一次边框
     polygon.draw(painter, color)

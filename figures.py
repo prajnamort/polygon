@@ -50,8 +50,8 @@ class Polygon(object):
         self.num_inners += 1
 
     def draw(self, painter, color=Qt.black):
-        for side in self.sides:
-            side.draw(painter, color)
+        for plain_polygon in self.plain_polygons:
+            plain_polygon.draw(painter, color)
 
 
 class PlainPolygon(object):
@@ -66,9 +66,13 @@ class PlainPolygon(object):
             for vertice in vertices:
                 self.insert(-1, vertice)
 
+    @property
+    def n(self):
+        return len(self.vertices)
+
     def is_valid(self):
         """是否为合法的多边形。"""
-        return len(self.vertices) >= 3
+        return self.n >= 3
 
     @property
     def looped_vertices(self):
@@ -77,14 +81,10 @@ class PlainPolygon(object):
         return result
 
     @property
-    def num_sides(self):
-        return len(self.vertices)
-
-    @property
     def sides(self):
         """所有的边"""
         result = []
-        for i in range(self.num_sides):
+        for i in range(self.n):
             result.append(Line(self.looped_vertices[i], self.looped_vertices[i+1]))
         return result
 
@@ -97,20 +97,20 @@ class PlainPolygon(object):
         if point in self.vertices:
             return False, '输入失败：顶点不允许重合'
 
-        if self.num_sides >= 2:
-            pairs = [(Line(self.vertices[-1], point), self.vertices[-1]),
-                     (Line(point, self.vertices[0]), self.vertices[0])]
-        elif self.num_sides == 1:
-            pairs = [(Line(self.vertices[-1], point), self.vertices[-1])]
-        else:
-            pairs = []
+        # if self.n >= 2:
+        #     pairs = [(Line(self.vertices[-1], point), self.vertices[-1]),
+        #              (Line(point, self.vertices[0]), self.vertices[0])]
+        # elif self.n == 1:
+        #     pairs = [(Line(self.vertices[-1], point), self.vertices[-1])]
+        # else:
+        #     pairs = []
 
-        for line, vertice in pairs:
-            for side in self.sides:
-                intersect_point = Point()
-                intersect_type = side.intersect(line, intersect_point)
-                if intersect_type == QLineF.BoundedIntersection:
-                    pass  # TMP
+        # for line, vertice in pairs:
+        #     for side in self.sides:
+        #         intersect_point = Point()
+        #         intersect_type = side.intersect(line, intersect_point)
+        #         if intersect_type == QLineF.BoundedIntersection:
+        #             pass  # TMP
 
         self.vertices.insert(index, point)
         return True, '输入成功：%s' % point

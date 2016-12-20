@@ -8,7 +8,6 @@ def fill_polygon(paint_area, polygon, painter, color=Qt.black):
     if polygon.is_valid():
         scanline_fill(paint_area=paint_area, polygon=polygon, painter=painter, color=color)
     else:
-        painter.setPen(color)
         polygon.draw(painter, color)
 
 
@@ -49,7 +48,8 @@ def scanline_fill(paint_area, polygon, painter, color=Qt.black):
                 another_y1 = side1.get_another_vertice(point).y()
                 another_y2 = side2.get_another_vertice(point).y()
                 if (another_y1 - ynow) * (another_y2 - ynow) < 0:  # 异侧：只留一个交点
-                    points.remove(point)
+                    points.pop(index2)
+                    sides.pop(index2)
             else:
                 raise Exception('交点个数不合法')
 

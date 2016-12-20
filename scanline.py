@@ -7,6 +7,17 @@ from utils import count_list
 def fill_polygon(paint_area, polygon, painter, color=Qt.black):
     if polygon.is_valid():
         scanline_fill(paint_area=paint_area, polygon=polygon, painter=painter, color=color)
+    elif polygon.outer.is_valid():
+        valid_polygon = Polygon(outer=polygon.outer)
+        invalid_inners = []
+        for inner in polygon.inners:
+            if inner.is_valid():
+                valid_polygon.insert_inner(inner)
+            else:
+                invalid_inners.append(inner)
+        scanline_fill(paint_area=paint_area, polygon=valid_polygon, painter=painter, color=color)
+        for inner in invalid_inners:
+            inner.draw(painter, Qt.white)
     else:
         polygon.draw(painter, color)
 

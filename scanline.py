@@ -57,12 +57,7 @@ def scanline_fill(paint_area, polygon, painter, color=Qt.black):
         points = sorted(points, key=lambda p: p.x())
         for i in range(0, len(points), 2):
             point1 = points[i]
-            try:
-                point2 = points[i+1]
-            except:
-                print(points)
-                print(polygon.sides)
-                raise
+            point2 = points[i+1]
             painter.drawLine(point1.x(), ynow, point2.x(), ynow)
 
     # 再单独画一次边框

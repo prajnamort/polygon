@@ -80,7 +80,9 @@ class PLGMainWidget(QWidget):
         label1_2 = QLabel('裁剪多边形：')
         label1_2.setMinimumWidth(100)
         self.btn_cutter_outer = QPushButton('输入多边形')
+        self.btn_cutter_outer.clicked.connect(self.input_cutter_outer)
         self.btn_cutter_inner = QPushButton('输入内环')
+        self.btn_cutter_inner.clicked.connect(self.input_cutter_inner)
 
         label2 = QLabel('其它操作：')
         label2.setMinimumWidth(100)
@@ -128,7 +130,21 @@ class PLGMainWidget(QWidget):
             raise
         self.state = PLGState.INPUT_MAIN_INNER
         self.main_polygon.insert_inner(PlainPolygon())
-        # self.paint_area.repaint()
+        self.paint_area.repaint()
+
+    def input_cutter_outer(self):
+        if self.state != PLGState.NORMAL:
+            raise
+        self.state = PLGState.INPUT_CUTTER_OUTER
+        self.cutter_polygon = Polygon()
+        self.paint_area.repaint()
+
+    def input_cutter_inner(self):
+        if self.state != PLGState.NORMAL:
+            raise
+        self.state = PLGState.INPUT_CUTTER_INNER
+        self.cutter_polygon.insert_inner(PlainPolygon())
+        self.paint_area.repaint()
 
     def select_color(self):
         color = QColorDialog.getColor()
@@ -148,6 +164,14 @@ class PLGMainWidget(QWidget):
                 self.state = PLGState.NORMAL
                 if not self.main_polygon.inners[-1].is_valid():
                     self.main_polygon.inners.pop()
+            elif self.state == PLGState.INPUT_CUTTER_OUTER:
+                self.state = PLGState.NORMAL
+                if not self.cutter_polygon.is_valid():
+                    self.cutter_polygon = None
+            elif self.state == PLGState.INPUT_CUTTER_INNER:
+                self.state = PLGState.NORMAL
+                if not self.cutter_polygon.inners[-1].is_valid():
+                    self.cutter_polygon.inners.pop()
             self.paint_area.repaint()
         super().keyPressEvent(event)
 
@@ -214,6 +238,14 @@ class PLGPaintArea(QLabel):
             self.repaint()
         elif self.main_widget.state == PLGState.INPUT_MAIN_INNER:
             success, message = self.main_polygon.inners[-1].insert(-1, Point(x, y))
+            self.showMessage(message)
+            self.repaint()
+        elif self.main_widget.state == PLGState.INPUT_CUTTER_OUTER:
+            success, message = self.cutter_polygon.outer.insert(-1, Point(x, y))
+            self.showMessage(message)
+            self.repaint()
+        elif self.main_widget.state == PLGState.INPUT_CUTTER_INNER:
+            success, message = self.cutter_polygon.inners[-1].insert(-1, Point(x, y))
             self.showMessage(message)
             self.repaint()
         super().mousePressEvent(event)

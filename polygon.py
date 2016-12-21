@@ -83,6 +83,8 @@ class PLGMainWidget(QWidget):
         self.btn_cutter_outer.clicked.connect(self.input_cutter_outer)
         self.btn_cutter_inner = QPushButton('输入内环')
         self.btn_cutter_inner.clicked.connect(self.input_cutter_inner)
+        self.btn_cut = QPushButton('开始裁剪')
+        self.btn_cut.clicked.connect(self.cut)
 
         label2 = QLabel('其它操作：')
         label2.setMinimumWidth(100)
@@ -101,6 +103,7 @@ class PLGMainWidget(QWidget):
         hbox1.addWidget(label1_2)
         hbox1.addWidget(self.btn_cutter_outer)
         hbox1.addWidget(self.btn_cutter_inner)
+        hbox1.addWidget(self.btn_cut)
         hbox1.addSpacing(100)
         hbox2 = QHBoxLayout()
         hbox2.addWidget(label2)
@@ -120,37 +123,44 @@ class PLGMainWidget(QWidget):
 
     def input_main_outer(self):
         if self.state != PLGState.NORMAL:
-            raise
+            self.showMessage('非法操作')
+            return
         self.state = PLGState.INPUT_MAIN_OUTER
         self.main_polygon = Polygon()
         self.paint_area.repaint()
 
     def input_main_inner(self):
         if self.state != PLGState.NORMAL:
-            raise
+            self.showMessage('非法操作')
+            return
         self.state = PLGState.INPUT_MAIN_INNER
         self.main_polygon.insert_inner(PlainPolygon())
-        self.paint_area.repaint()
-
-    def input_cutter_outer(self):
-        if self.state != PLGState.NORMAL:
-            raise
-        self.state = PLGState.INPUT_CUTTER_OUTER
-        self.cutter_polygon = Polygon()
-        self.paint_area.repaint()
-
-    def input_cutter_inner(self):
-        if self.state != PLGState.NORMAL:
-            raise
-        self.state = PLGState.INPUT_CUTTER_INNER
-        self.cutter_polygon.insert_inner(PlainPolygon())
         self.paint_area.repaint()
 
     def select_color(self):
         color = QColorDialog.getColor()
         if color.isValid():
             self.paint_area.current_color = color
-            self.paint_area.repaint()
+        self.paint_area.repaint()
+
+    def input_cutter_outer(self):
+        if self.state != PLGState.NORMAL:
+            self.showMessage('非法操作')
+            return
+        self.state = PLGState.INPUT_CUTTER_OUTER
+        self.cutter_polygon = Polygon()
+        self.paint_area.repaint()
+
+    def input_cutter_inner(self):
+        if self.state != PLGState.NORMAL:
+            self.showMessage('非法操作')
+            return
+        self.state = PLGState.INPUT_CUTTER_INNER
+        self.cutter_polygon.insert_inner(PlainPolygon())
+        self.paint_area.repaint()
+
+    def cut(self):
+        pass
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -182,7 +192,7 @@ class PLGPaintArea(QLabel):
         super().__init__(*args, **kwargs)
         self.main_window = self.parent().parent()
         self.main_widget = self.parent()
-        self.current_color = Qt.black
+        self.current_color = QColor('#ebc9ff')
         self.initUI()
 
     def initUI(self):

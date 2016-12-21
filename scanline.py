@@ -1,12 +1,14 @@
+from numpy import array, zeros
 from PyQt5.QtCore import Qt, QLineF, QPointF
 
 from figures import Polygon, PlainPolygon, Line, Point, PLGFloat
 from utils import count_list
 
 
-def fill_polygon(paint_area, polygon, painter, color=Qt.black):
+def fill_polygon(paint_area, polygon, painter=None, color=Qt.black, to_matrix=False):
     if polygon.is_valid():
-        scanline_fill(paint_area=paint_area, polygon=polygon, painter=painter, color=color)
+        result = scanline_fill(paint_area=paint_area, polygon=polygon,
+                               painter=painter, color=color, to_matrix=to_matrix)
     elif polygon.outer.is_valid():
         valid_polygon = Polygon(outer=polygon.outer)
         invalid_inners = []
@@ -20,19 +22,25 @@ def fill_polygon(paint_area, polygon, painter, color=Qt.black):
             inner.draw(painter, Qt.white)
     else:
         polygon.draw(painter, color)
+    if to_matrix:
+        return result
 
 
-def scanline_fill(paint_area, polygon, painter, color=Qt.black):
+def scanline_fill(paint_area, polygon, painter=None, color=Qt.black, to_matrix=False):
     if not polygon.is_valid():
         raise Exception('多边形不合法，无法使用扫描线填充')
 
-    painter.setPen(color)
     area_width = paint_area.width()
     area_height = paint_area.height()
     area_xmin = 0
     area_ymin = 0
     area_xmax = area_width - 1
     area_ymax = area_height - 1
+
+    if to_matrix:
+        matrix = zeros((area_height, area_width), dtype=int)
+    else:
+        painter.setPen(color)
 
     for ynow in range(area_ymin, area_ymax + 1):
         xline = QLineF(area_xmin, ynow, area_xmax, ynow)
@@ -67,9 +75,42 @@ def scanline_fill(paint_area, polygon, painter, color=Qt.black):
         # 交点排序、配对，线段涂色
         points = sorted(points, key=lambda p: p.x())
         for i in range(0, len(points), 2):
-            point1 = points[i]
-            point2 = points[i+1]
-            painter.drawLine(point1.x(), ynow, point2.x(), ynow)
+            x1 = round(points[i].x())
+            x2 = round(points[i+1].x())
+            if to_matrix:
+                matrix[ynow][x1:x2+1].fill(1)
+            else:
+                painter.drawLine(x1, ynow, x2, ynow)
 
     # 再单独画一次边框
-    polygon.draw(painter, color)
+    for side in polygon.sides:
+        x1 = round(side.x1())
+        y1 = round(side.y1())
+        x2 = round(side.x2())
+        y2 = round(side.y2())
+        if to_matrix:
+            if y1 == y2:
+                matrix[y1][x1:x2+1].fill(1)
+        else:
+            painter.drawLine(x1, y1, x2, y2)
+
+    if to_matrix:
+        return matrix
+    else:
+        return
+
+
+def fill_matrix(paint_area, matrix, painter=None, color=Qt.black):
+    area_width = paint_area.width()
+    area_height = paint_area.height()
+    area_xmin = 0
+    area_ymin = 0
+    area_xmax = area_width - 1
+    area_ymax = area_height - 1
+
+    painter.setPen(color)
+
+    for ynow in range(area_ymin, area_ymax + 1):
+        for xnow in range(area_xmin, area_xmax + 1):
+            if matrix[ynow][xnow]:
+                painter.drawPoint(xnow, ynow)

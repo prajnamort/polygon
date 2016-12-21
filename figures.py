@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QLineF, QPointF, QLine, QPoint
+from PyQt5.QtCore import Qt, QLineF, QPointF
 
 from utils import isclose
 
@@ -44,6 +44,10 @@ class Polygon(object):
             result.extend(plain_polygon.sides)
         return result
 
+    @property
+    def center(self):
+        return self.outer.center
+
     def insert_inner(self, inner):
         """增加一个新的内环"""
         self.inners.append(inner)
@@ -52,6 +56,11 @@ class Polygon(object):
     def draw(self, painter, color=Qt.black):
         for plain_polygon in self.plain_polygons:
             plain_polygon.draw(painter, color)
+
+    def copy(self):
+        outer = self.outer.copy()
+        inners = [inner.copy() for inner in self.inners]
+        return Polygon(outer, inners)
 
 
 class PlainPolygon(object):
@@ -88,6 +97,15 @@ class PlainPolygon(object):
             result.append(Line(self.looped_vertices[i], self.looped_vertices[i+1]))
         return result
 
+    @property
+    def center(self):
+        """图形中心"""
+        if not self.is_valid():
+            return None
+        x_sum = sum([point.x() for point in self.vertices])
+        y_sum = sum([point.y() for point in self.vertices])
+        return Point(x_sum/self.n, y_sum/self.n)
+
     def insert(self, index, point):
         """增加一个新的顶点
 
@@ -121,6 +139,9 @@ class PlainPolygon(object):
     def draw(self, painter, color=Qt.black):
         for side in self.sides:
             side.draw(painter, color)
+
+    def copy(self):
+        return PlainPolygon([point.copy() for point in self.vertices])
 
 
 class Line(QLineF):
@@ -162,6 +183,9 @@ class Line(QLineF):
     def y2(self):
         return PLGFloat(super().y2())
 
+    def copy(self):
+        return Line(self.p1.copy(), self.p2.copy())
+
 
 class Point(QPointF):
     """点"""
@@ -181,6 +205,9 @@ class Point(QPointF):
 
     def y(self):
         return PLGFloat(super().y())
+
+    def copy(self):
+        return Point(self.x(), self.y())
 
 
 class PLGFloat(float):

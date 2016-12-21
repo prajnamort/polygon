@@ -331,7 +331,7 @@ class PLGMainWidget(QWidget):
                                          self.main_polygon.vertices):
                 point.setX(orig_point.x() + (x - self.orig_mouse_point.x()))
                 point.setY(orig_point.y() + (y - self.orig_mouse_point.y()))
-            if (x + y) % 7 == 0 or (x - y) % 7 == 0:
+            if (x + y) % 7 == 0 or (x - y) % 7 == 0:  # 每次都 repaint 的话延迟过高
                 self.paint_area.repaint()
 
     def keyPressEvent(self, event):

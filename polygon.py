@@ -49,6 +49,7 @@ class PLGPaintArea(QLabel):
         super().__init__(*args, **kwargs)
         self.main_window = self.parent().parent()
         self.main_widget = self.parent()
+        self.setFocusPolicy(Qt.StrongFocus)
         self.initUI()
 
     def initUI(self):
@@ -78,6 +79,10 @@ class PLGPaintArea(QLabel):
         self.main_widget.paint_area_wheelEvent(event)
         super().wheelEvent(event)
 
+    def keyPressEvent(self, event):
+        self.main_widget.paint_area_keyPressEvent(event)
+        super().keyPressEvent(event)
+
 
 class PLGState(object):
     NORMAL = 0  # 正常
@@ -100,7 +105,7 @@ class PLGMainWidget(QWidget):
         self.state = PLGState.NORMAL
         self.current_color = QColor('#ebc9ff')
         self.initUI()
-        # self.btn_main_outer.clicked.emit()
+        self.btn_main_outer.clicked.emit()
 
     def initUI(self):
         self.paint_area = PLGPaintArea(self)
@@ -389,8 +394,7 @@ class PLGMainWidget(QWidget):
             point.setY(center.y() + factor * (point.y() - center.y()))
         self.paint_area.repaint()
 
-
-    def keyPressEvent(self, event):
+    def paint_area_keyPressEvent(self, event):
         key = event.key()
         if key in [Qt.Key_Enter, Qt.Key_Return]:
             if self.state == PLGState.INPUT_MAIN_OUTER:
@@ -410,7 +414,6 @@ class PLGMainWidget(QWidget):
                 if not self.cutter_polygon.inners[-1].is_valid():
                     self.cutter_polygon.inners.pop()
             self.paint_area.repaint()
-        super().keyPressEvent(event)
 
 
 if __name__ == '__main__':

@@ -187,7 +187,6 @@ class PLGMainWidget(QWidget):
                              painter=painter, color=self.current_color)
             if self.cutter_polygon:
                 self.cutter_polygon.draw(painter=painter, color=Qt.black)
-        print('-------------------------------------------------')
 
     def input_main_outer(self):
         if self.state != PLGState.NORMAL:
@@ -296,7 +295,6 @@ class PLGMainWidget(QWidget):
     def paint_area_mousePressEvent(self, event):
         x = event.x()
         y = event.y()
-        print(x, y)
         if self.state == PLGState.INPUT_MAIN_OUTER:
             success, message = self.main_polygon.outer.insert(-1, Point(x, y))
             self.showMessage(message)

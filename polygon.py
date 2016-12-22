@@ -4,7 +4,7 @@ import sys, random
 import math
 from PyQt5.QtWidgets import (
     QWidget, QMainWindow, QApplication, QDesktopWidget, QHBoxLayout, QVBoxLayout,
-    QGridLayout, QPushButton, QLabel, QFrame, QColorDialog,)
+    QGridLayout, QPushButton, QLabel, QFrame, QColorDialog, QMessageBox,)
 from PyQt5.QtGui import QPainter, QColor, QPen
 from PyQt5.QtCore import Qt
 
@@ -100,13 +100,7 @@ class PLGMainWidget(QWidget):
         self.state = PLGState.NORMAL
         self.current_color = QColor('#ebc9ff')
         self.initUI()
-        self.btn_main_outer.clicked.emit()
-
-        # point1 = Point(254, 379)
-        # point2 = Point(527, 309)
-        # point3 = Point(508, 430)
-        # plain_polygon1 = PlainPolygon([point1, point2, point3])
-        # self.main_polygon = Polygon(plain_polygon1)
+        # self.btn_main_outer.clicked.emit()
 
     def initUI(self):
         self.paint_area = PLGPaintArea(self)
@@ -138,6 +132,7 @@ class PLGMainWidget(QWidget):
         label2 = QLabel('其它操作：')
         label2.setMinimumWidth(100)
         self.btn_move = QPushButton('平移')
+        self.btn_move.clicked.connect(self.move)
         self.btn_rotate = QPushButton('旋转')
         self.btn_rotate.clicked.connect(self.rotate)
         self.btn_zoom = QPushButton('缩放')
@@ -173,6 +168,15 @@ class PLGMainWidget(QWidget):
     def showMessage(self, message):
         self.main_window.statusBar().showMessage(message)
 
+    def showMessageBox(self, message):
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Information)
+        msg.setText(message)
+        msg.setWindowTitle('提示')
+        msg.setStandardButtons(QMessageBox.Cancel)
+        msg.show()
+        return None
+
     def draw_polygon(self, painter):
         if self.cutted_matrix is not None:
             fill_matrix(self.paint_area, self.cutted_matrix,
@@ -187,8 +191,7 @@ class PLGMainWidget(QWidget):
 
     def input_main_outer(self):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
-            return
+            return self.showMessageBox('非法操作')
         self.cutted_matrix = None
         self.state = PLGState.INPUT_MAIN_OUTER
         self.main_polygon = Polygon()
@@ -196,11 +199,9 @@ class PLGMainWidget(QWidget):
 
     def input_main_inner(self):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
-            return
+            return self.showMessageBox('非法操作')
         if not self.main_polygon:
-            self.showMessage('请先输入主多边形外环')
-            return
+            return self.showMessageBox('请先输入主多边形外环')
         self.cutted_matrix = None
         self.state = PLGState.INPUT_MAIN_INNER
         self.main_polygon.insert_inner(PlainPolygon())
@@ -215,11 +216,9 @@ class PLGMainWidget(QWidget):
 
     def input_cutter_outer(self):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
-            return
+            return self.showMessageBox('非法操作')
         if not self.main_polygon:
-            self.showMessage('请先输入主多边形')
-            return
+            return self.showMessageBox('请先输入主多边形')
         self.cutted_matrix = None
         self.state = PLGState.INPUT_CUTTER_OUTER
         self.cutter_polygon = Polygon()
@@ -227,14 +226,11 @@ class PLGMainWidget(QWidget):
 
     def input_cutter_inner(self):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
-            return
+            return self.showMessageBox('非法操作')
         if not self.main_polygon:
-            self.showMessage('请先输入主多边形')
-            return
+            return self.showMessageBox('请先输入主多边形')
         if not self.cutter_polygon:
-            self.showMessage('请先输入裁剪多边形外环')
-            return
+            return self.showMessageBox('请先输入裁剪多边形外环')
         self.cutted_matrix = None
         self.state = PLGState.INPUT_CUTTER_INNER
         self.cutter_polygon.insert_inner(PlainPolygon())
@@ -242,14 +238,11 @@ class PLGMainWidget(QWidget):
 
     def cut(self):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
-            return
+            return self.showMessageBox('非法操作')
         if not self.main_polygon:
-            self.showMessage('请先输入主多边形')
-            return
+            return self.showMessageBox('请先输入主多边形')
         if not self.cutter_polygon:
-            self.showMessage('请先输入裁剪多边形')
-            return
+            return self.showMessageBox('请先输入裁剪多边形')
         matrix1 = fill_polygon(self, self.main_polygon, to_matrix=True)
         matrix2 = fill_polygon(self, self.cutter_polygon, to_matrix=True)
         self.cutted_matrix = matrix1 & matrix2
@@ -257,33 +250,42 @@ class PLGMainWidget(QWidget):
         self.cutter_polygon = None
         self.paint_area.repaint()
 
-    def rotate(self):
+    def move(self):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
-            return
+            return self.showMessageBox('非法操作')
         self.cutted_matrix = None
         if not self.main_polygon:
-            self.showMessage('请先输入主多边形')
+            self.showMessageBox('请先输入主多边形')
             self.paint_area.repaint()
             return
+        self.showMessageBox('请使用鼠标"左键"进行平移')
+
+    def rotate(self):
+        if self.state != PLGState.NORMAL:
+            return self.showMessageBox('非法操作')
+        self.cutted_matrix = None
+        if not self.main_polygon:
+            self.showMessageBox('请先输入主多边形')
+            self.paint_area.repaint()
+            return
+        self.showMessageBox('请使用鼠标"右键"进行旋转')
 
     def zoom(self):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
-            return
+            return self.showMessageBox('非法操作')
         self.cutted_matrix = None
         if not self.main_polygon:
-            self.showMessage('请先输入主多边形')
+            self.showMessageBox('请先输入主多边形')
             self.paint_area.repaint()
             return
+        self.showMessageBox('请使用鼠标"滚轮"进行缩放')
 
     def flip(self):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
-            return
+            return self.showMessageBox('非法操作')
         self.cutted_matrix = None
         if not self.main_polygon:
-            self.showMessage('请先输入主多边形')
+            self.showMessageBox('请先输入主多边形')
             self.paint_area.repaint()
             return
         center = self.main_polygon.center
@@ -315,7 +317,7 @@ class PLGMainWidget(QWidget):
             if event.button() == Qt.LeftButton:
                 self.cutted_matrix = None
                 if not self.main_polygon:
-                    self.showMessage('请先输入主多边形')
+                    self.showMessageBox('请先输入主多边形')
                     self.paint_area.repaint()
                     return
                 self.state = PLGState.MOVE
@@ -325,7 +327,7 @@ class PLGMainWidget(QWidget):
             elif event.button() == Qt.RightButton:
                 self.cutted_matrix = None
                 if not self.main_polygon:
-                    self.showMessage('请先输入主多边形')
+                    self.showMessageBox('请先输入主多边形')
                     self.paint_area.repaint()
                     return
                 self.state = PLGState.ROTATE
@@ -354,7 +356,7 @@ class PLGMainWidget(QWidget):
                                          self.main_polygon.vertices):
                 point.setX(orig_point.x() + (x - self.orig_mouse_point.x()))
                 point.setY(orig_point.y() + (y - self.orig_mouse_point.y()))
-            if (x + y) % 7 == 0 or (x - y) % 7 == 0:  # 每次都 repaint 的话延迟过高
+            if (x + y) % 5 == 0 or (x - y) % 5 == 0:  # 每次都 repaint 的话延迟过高
                 self.paint_area.repaint()
         elif self.state == PLGState.ROTATE:
             orig_mouse_x = self.orig_mouse_point.x()
@@ -375,11 +377,11 @@ class PLGMainWidget(QWidget):
 
     def paint_area_wheelEvent(self, event):
         if self.state != PLGState.NORMAL:
-            self.showMessage('非法操作')
+            self.showMessageBox('非法操作')
             return
         self.cutted_matrix = None
         if not self.main_polygon:
-            self.showMessage('请先输入主多边形')
+            self.showMessageBox('请先输入主多边形')
             self.paint_area.repaint()
             return
         factor = 1.1 if event.angleDelta().y() > 0 else 0.91

@@ -102,9 +102,11 @@ class PlainPolygon(object):
         """图形中心"""
         if not self.is_valid():
             return None
-        x_sum = sum([point.x() for point in self.vertices])
-        y_sum = sum([point.y() for point in self.vertices])
-        return Point(x_sum/self.n, y_sum/self.n)
+        x_list = [point.x() for point in self.vertices]
+        y_list = [point.y() for point in self.vertices]
+        x_min, x_max = min(x_list), max(x_list)
+        y_min, y_max = min(y_list), max(y_list)
+        return Point((x_min+x_max)/2, (y_min+y_max/2))
 
     def insert(self, index, point):
         """增加一个新的顶点

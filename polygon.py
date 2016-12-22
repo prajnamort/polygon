@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys, random
+import math
 from PyQt5.QtWidgets import (
     QWidget, QMainWindow, QApplication, QDesktopWidget, QHBoxLayout, QVBoxLayout,
     QGridLayout, QPushButton, QLabel, QFrame, QColorDialog,)
@@ -9,6 +10,7 @@ from PyQt5.QtCore import Qt
 
 from figures import Polygon, PlainPolygon, Line, Point
 from scanline import fill_polygon, fill_matrix
+from utils import angle_between
 
 
 class PLGMainWindow(QMainWindow):
@@ -83,9 +85,8 @@ class PLGState(object):
     INPUT_MAIN_INNER = 11  # 输入内环（主多边形）
     INPUT_CUTTER_OUTER = 20  # 输入多边形（裁剪多边形）
     INPUT_CUTTER_INNER = 21  # 输入内环（裁剪多边形）
-    MOVE = 50  # 正常
-    ROTATE = 60  # 正常
-    FLIP = 70  # 正常
+    MOVE = 50  # 移动
+    ROTATE = 60  # 旋转
 
 
 class PLGMainWidget(QWidget):
@@ -294,7 +295,6 @@ class PLGMainWidget(QWidget):
         x = event.x()
         y = event.y()
         print(x, y)
-        print(event.button())
         if self.state == PLGState.INPUT_MAIN_OUTER:
             success, message = self.main_polygon.outer.insert(-1, Point(x, y))
             self.showMessage(message)
@@ -312,20 +312,35 @@ class PLGMainWidget(QWidget):
             self.showMessage(message)
             self.paint_area.repaint()
         elif self.state == PLGState.NORMAL:
-            self.cutted_matrix = None
-            if not self.main_polygon:
-                self.showMessage('请先输入主多边形')
+            if event.button() == Qt.LeftButton:
+                self.cutted_matrix = None
+                if not self.main_polygon:
+                    self.showMessage('请先输入主多边形')
+                    self.paint_area.repaint()
+                    return
+                self.state = PLGState.MOVE
+                self.orig_mouse_point = Point(x, y)
+                self.orig_main_polygon = self.main_polygon.copy()
                 self.paint_area.repaint()
-                return
-            self.state = PLGState.MOVE
-            self.orig_mouse_point = Point(x, y)
-            self.orig_main_polygon = self.main_polygon.copy()
-            self.paint_area.repaint()
+            elif event.button() == Qt.RightButton:
+                self.cutted_matrix = None
+                if not self.main_polygon:
+                    self.showMessage('请先输入主多边形')
+                    self.paint_area.repaint()
+                    return
+                self.state = PLGState.ROTATE
+                self.orig_mouse_point = Point(x, y)
+                self.orig_main_polygon = self.main_polygon.copy()
+                self.orig_main_center = self.orig_main_polygon.center
+                self.paint_area.repaint()
 
     def paint_area_mouseReleaseEvent(self, event):
         x = event.x()
         y = event.y()
         if self.state == PLGState.MOVE:
+            self.state = PLGState.NORMAL
+            self.paint_area.repaint()
+        elif self.state == PLGState.ROTATE:
             self.state = PLGState.NORMAL
             self.paint_area.repaint()
 
@@ -340,6 +355,22 @@ class PLGMainWidget(QWidget):
                 point.setX(orig_point.x() + (x - self.orig_mouse_point.x()))
                 point.setY(orig_point.y() + (y - self.orig_mouse_point.y()))
             if (x + y) % 7 == 0 or (x - y) % 7 == 0:  # 每次都 repaint 的话延迟过高
+                self.paint_area.repaint()
+        elif self.state == PLGState.ROTATE:
+            orig_mouse_x = self.orig_mouse_point.x()
+            orig_mouse_y = self.orig_mouse_point.y()
+            ox = self.orig_main_center.x()
+            oy = self.orig_main_center.y()
+            angle = angle_between(Line(self.orig_main_center,
+                                       self.orig_mouse_point),
+                                  Line(self.orig_main_center,
+                                       Point(x, y)))
+            for orig_point, point in zip(self.orig_main_polygon.vertices,
+                                         self.main_polygon.vertices):
+                px, py = orig_point.x(), orig_point.y()
+                point.setX(ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy))
+                point.setY(oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy))
+            if (x + y) % 5 == 0 or (x - y) % 5 == 0:  # 每次都 repaint 的话延迟过高
                 self.paint_area.repaint()
 
     def paint_area_wheelEvent(self, event):

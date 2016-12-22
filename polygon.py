@@ -285,6 +285,10 @@ class PLGMainWidget(QWidget):
             self.showMessage('请先输入主多边形')
             self.paint_area.repaint()
             return
+        center = self.main_polygon.center
+        for point in self.main_polygon.vertices:
+            point.setX(2 * center.x() - point.x())
+        self.paint_area.repaint()
 
     def paint_area_mousePressEvent(self, event):
         x = event.x()

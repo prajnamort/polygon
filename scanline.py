@@ -76,11 +76,14 @@ def scanline_fill(paint_area, polygon, painter=None, color=Qt.black, to_matrix=F
         points = sorted(points, key=lambda p: p.x())
         for i in range(0, len(points), 2):
             x1 = round(points[i].x())
-            x2 = round(points[i+1].x())
-            if to_matrix:
-                matrix[ynow][x1:x2+1].fill(1)
-            else:
-                painter.drawLine(x1, ynow, x2, ynow)
+            try:
+                x2 = round(points[i+1].x())
+                if to_matrix:
+                    matrix[ynow][x1:x2+1].fill(1)
+                else:
+                    painter.drawLine(x1, ynow, x2, ynow)
+            except:
+                pass
 
     # 再单独画一次边框
     for side in polygon.sides:

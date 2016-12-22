@@ -72,6 +72,10 @@ class PLGPaintArea(QLabel):
         self.main_widget.paint_area_mouseMoveEvent(event)
         super().mouseMoveEvent(event)
 
+    def wheelEvent(self, event):
+        self.main_widget.paint_area_wheelEvent(event)
+        super().wheelEvent(event)
+
 
 class PLGState(object):
     NORMAL = 0  # 正常
@@ -257,9 +261,9 @@ class PLGMainWidget(QWidget):
             self.showMessage('非法操作')
             return
         self.cutted_matrix = None
-        self.paint_area.repaint()
         if not self.main_polygon:
             self.showMessage('请先输入主多边形')
+            self.paint_area.repaint()
             return
 
     def zoom(self):
@@ -267,9 +271,9 @@ class PLGMainWidget(QWidget):
             self.showMessage('非法操作')
             return
         self.cutted_matrix = None
-        self.paint_area.repaint()
         if not self.main_polygon:
             self.showMessage('请先输入主多边形')
+            self.paint_area.repaint()
             return
 
     def flip(self):
@@ -277,9 +281,9 @@ class PLGMainWidget(QWidget):
             self.showMessage('非法操作')
             return
         self.cutted_matrix = None
-        self.paint_area.repaint()
         if not self.main_polygon:
             self.showMessage('请先输入主多边形')
+            self.paint_area.repaint()
             return
 
     def paint_area_mousePressEvent(self, event):
@@ -305,9 +309,9 @@ class PLGMainWidget(QWidget):
             self.paint_area.repaint()
         elif self.state == PLGState.NORMAL:
             self.cutted_matrix = None
-            self.paint_area.repaint()
             if not self.main_polygon:
                 self.showMessage('请先输入主多边形')
+                self.paint_area.repaint()
                 return
             self.state = PLGState.MOVE
             self.orig_mouse_point = Point(x, y)
@@ -333,6 +337,23 @@ class PLGMainWidget(QWidget):
                 point.setY(orig_point.y() + (y - self.orig_mouse_point.y()))
             if (x + y) % 7 == 0 or (x - y) % 7 == 0:  # 每次都 repaint 的话延迟过高
                 self.paint_area.repaint()
+
+    def paint_area_wheelEvent(self, event):
+        if self.state != PLGState.NORMAL:
+            self.showMessage('非法操作')
+            return
+        self.cutted_matrix = None
+        if not self.main_polygon:
+            self.showMessage('请先输入主多边形')
+            self.paint_area.repaint()
+            return
+        factor = 1.1 if event.angleDelta().y() > 0 else 0.91
+        center = self.main_polygon.center
+        for point in self.main_polygon.vertices:
+            point.setX(center.x() + factor * (point.x() - center.x()))
+            point.setY(center.y() + factor * (point.y() - center.y()))
+        self.paint_area.repaint()
+
 
     def keyPressEvent(self, event):
         key = event.key()

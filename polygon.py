@@ -105,7 +105,73 @@ class PLGMainWidget(QWidget):
         self.state = PLGState.NORMAL
         self.current_color = QColor('#ebc9ff')
         self.initUI()
-        self.btn_main_outer.clicked.emit()
+
+        # 帮用户点下“输入多边形”按钮
+        # self.btn_main_outer.clicked.emit()
+
+        # TEST CASE 1
+        # p1 = Point(200, 200)
+        # p2 = Point(300, 200)
+        # p3 = Point(200, 300)
+        # p4 = Point(300, 300)
+        # plain_polygon = PlainPolygon([p1, p2, p3, p4])
+        # self.main_polygon = Polygon(plain_polygon)
+
+        # TEST CASE 2
+        # p1 = Point(200, 200)
+        # p2 = Point(300, 200)
+        # p3 = Point(400, 100)
+        # p4 = Point(500, 300)
+        # plain_polygon = PlainPolygon([p1, p2, p3, p4])
+        # self.main_polygon = Polygon(plain_polygon)
+
+        # TEST CASE 3
+        # p1 = Point(200, 200)
+        # p2 = Point(300, 200)
+        # p3 = Point(400, 100)
+        # p4 = Point(500, 300)
+        # p5 = Point(600, 200)
+        # p6 = Point(700, 200)
+        # p7 = Point(700, 400)
+        # p8 = Point(200, 400)
+        # plain_polygon = PlainPolygon([p1, p2, p3, p4, p5, p6, p7, p8])
+        # self.main_polygon = Polygon(plain_polygon)
+
+        # TEST CASE 4
+        # p1 = Point(200, 400)
+        # p2 = Point(300, 400)
+        # p3 = Point(200, 200)
+        # p4 = Point(100, 400)
+        # plain_polygon = PlainPolygon([p1, p2, p3, p4])
+        # self.main_polygon = Polygon(plain_polygon)
+
+        # TEST CASE 5
+        # p1 = Point(200, 400)
+        # p2 = Point(100, 400)
+        # p3 = Point(400, 400)
+        # p4 = Point(300, 200)
+        # plain_polygon = PlainPolygon([p1, p2, p3, p4])
+        # self.main_polygon = Polygon(plain_polygon)
+
+        # TEST CASE 5
+        # p1 = Point(200, 300)
+        # p2 = Point(100, 300)
+        # p3 = Point(400, 300)
+        # p4 = Point(350, 500)
+        # p5 = Point(300, 300)
+        # p6 = Point(250, 100)
+        # plain_polygon = PlainPolygon([p1, p2, p3, p4, p5, p6])
+        # self.main_polygon = Polygon(plain_polygon)
+
+        # TEST CASE 6
+        # p1 = Point(200, 300)
+        # p2 = Point(100, 300)
+        # p3 = Point(400, 300)
+        # p4 = Point(250, 500)
+        # p5 = Point(300, 300)
+        # p6 = Point(250, 100)
+        # plain_polygon = PlainPolygon([p1, p2, p3, p4, p5, p6])
+        # self.main_polygon = Polygon(plain_polygon)
 
     def initUI(self):
         self.paint_area = PLGPaintArea(self)
@@ -301,7 +367,6 @@ class PLGMainWidget(QWidget):
         x = event.x()
         y = event.y()
         if self.state == PLGState.INPUT_MAIN_OUTER:
-            success, message = self.main_polygon.outer.insert(-1, Point(x, y))
             self.showMessage(message)
             self.paint_area.repaint()
         elif self.state == PLGState.INPUT_MAIN_INNER:

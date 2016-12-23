@@ -167,6 +167,9 @@ class Line(QLineF):
         else:
             raise Exception('指定点并非该线段的顶点')
 
+    def points(self):
+        return (self.p1(), self.p2())
+
     def p1(self):
         return Point(super().p1())
 

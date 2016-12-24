@@ -207,8 +207,10 @@ class PLGMainWidget(QWidget):
         self.btn_rotate.clicked.connect(self.rotate)
         self.btn_zoom = QPushButton('缩放')
         self.btn_zoom.clicked.connect(self.zoom)
-        self.btn_flip = QPushButton('翻转')
-        self.btn_flip.clicked.connect(self.flip)
+        self.btn_flip_y = QPushButton('左右翻转')
+        self.btn_flip_y.clicked.connect(self.flip_y)
+        self.btn_flip_x = QPushButton('上下翻转')
+        self.btn_flip_x.clicked.connect(self.flip_x)
 
         label3_2 = QLabel('设置：')
         label3_2.setMinimumWidth(60)
@@ -233,7 +235,8 @@ class PLGMainWidget(QWidget):
         hbox3.addWidget(self.btn_move)
         hbox3.addWidget(self.btn_rotate)
         hbox3.addWidget(self.btn_zoom)
-        hbox3.addWidget(self.btn_flip)
+        hbox3.addWidget(self.btn_flip_y)
+        hbox3.addWidget(self.btn_flip_x)
         hbox3.addStretch(1)
         hbox3.addSpacing(100)
         hbox3.addWidget(label3_2)
@@ -353,7 +356,7 @@ class PLGMainWidget(QWidget):
             return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
         self.showMessageBox('请使用鼠标"滚轮"进行缩放')
 
-    def flip(self):
+    def flip_y(self):
         if self.state != PLGState.NORMAL:
             return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
         if not self.main_polygon:
@@ -366,6 +369,21 @@ class PLGMainWidget(QWidget):
             points.extend(self.cutter_polygon.vertices)
         for point in points:
             point.setX(2 * center.x() - point.x())
+        self.paint_area.repaint()
+
+    def flip_x(self):
+        if self.state != PLGState.NORMAL:
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
+        if not self.main_polygon:
+            self.showMessageBox('请先输入主多边形')
+            self.paint_area.repaint()
+            return
+        center = self.center_point
+        points = self.main_polygon.vertices
+        if self.cutted:
+            points.extend(self.cutter_polygon.vertices)
+        for point in points:
+            point.setY(2 * center.y() - point.y())
         self.paint_area.repaint()
 
     def select_color(self):

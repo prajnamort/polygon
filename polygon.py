@@ -108,7 +108,7 @@ class PLGMainWidget(QWidget):
         self.initUI()
 
         # 帮用户点下“输入多边形”按钮
-        # self.btn_main_outer.clicked.emit()
+        self.btn_main_outer.clicked.emit()
 
         # TEST CASE 1
         # p1 = Point(200, 200)

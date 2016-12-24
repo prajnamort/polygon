@@ -101,10 +101,10 @@ class PLGMainWidget(QWidget):
         self.main_window = self.parent()
         self.main_polygon = None
         self.cutter_polygon = None
-        self.cutted_matrix = None
-        self.center_point = None
+        self.cutted = False
         self.state = PLGState.NORMAL
         self.current_color = QColor('#ebc9ff')
+        self.center_point = None
         self.initUI()
 
         # 帮用户点下“输入多边形”按钮
@@ -259,8 +259,11 @@ class PLGMainWidget(QWidget):
         return None
 
     def draw_polygon(self, painter):
-        if self.cutted_matrix is not None:
-            fill_matrix(self.paint_area, self.cutted_matrix,
+        if self.cutted:
+            matrix1 = fill_polygon(self, self.main_polygon, to_matrix=True)
+            matrix2 = fill_polygon(self, self.cutter_polygon, to_matrix=True)
+            cutted_matrix = matrix1 & matrix2
+            fill_matrix(self.paint_area, cutted_matrix,
                         painter=painter, color=self.current_color)
         else:
             if self.main_polygon is not None:
@@ -277,100 +280,90 @@ class PLGMainWidget(QWidget):
         painter.setRenderHint(QPainter.Antialiasing, True)
         painter.drawPoint(self.center_point)
 
+    def reset_cutted(self):
+        if self.cutted:
+            self.main_polygon = None
+            self.cutter_polygon = None
+            self.cutted = False
+            self.paint_area.repaint()
+
     def input_main_outer(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
-        self.cutted_matrix = None
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
+        self.reset_cutted()
         self.state = PLGState.INPUT_MAIN_OUTER
         self.main_polygon = Polygon()
         self.paint_area.repaint()
 
     def input_main_inner(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
+        self.reset_cutted()
         if not self.main_polygon:
             return self.showMessageBox('请先输入主多边形外环')
-        self.cutted_matrix = None
         self.state = PLGState.INPUT_MAIN_INNER
         self.main_polygon.insert_inner(PlainPolygon())
         self.paint_area.repaint()
 
     def input_cutter_outer(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
+        self.reset_cutted()
         if not self.main_polygon:
             return self.showMessageBox('请先输入主多边形')
-        self.cutted_matrix = None
         self.state = PLGState.INPUT_CUTTER_OUTER
         self.cutter_polygon = Polygon()
         self.paint_area.repaint()
 
     def input_cutter_inner(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
+        self.reset_cutted()
         if not self.main_polygon:
             return self.showMessageBox('请先输入主多边形')
         if not self.cutter_polygon:
             return self.showMessageBox('请先输入裁剪多边形外环')
-        self.cutted_matrix = None
         self.state = PLGState.INPUT_CUTTER_INNER
         self.cutter_polygon.insert_inner(PlainPolygon())
         self.paint_area.repaint()
 
     def cut(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
         if not self.main_polygon:
             return self.showMessageBox('请先输入主多边形')
         if not self.cutter_polygon:
             return self.showMessageBox('请先输入裁剪多边形')
-        matrix1 = fill_polygon(self, self.main_polygon, to_matrix=True)
-        matrix2 = fill_polygon(self, self.cutter_polygon, to_matrix=True)
-        self.cutted_matrix = matrix1 & matrix2
-        self.main_polygon = None
-        self.cutter_polygon = None
+        self.cutted = True
         self.paint_area.repaint()
 
     def move(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
-        self.cutted_matrix = None
-        if not self.main_polygon:
-            self.showMessageBox('请先输入主多边形')
-            self.paint_area.repaint()
-            return
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
         self.showMessageBox('请使用鼠标"左键"进行平移')
 
     def rotate(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
-        self.cutted_matrix = None
-        if not self.main_polygon:
-            self.showMessageBox('请先输入主多边形')
-            self.paint_area.repaint()
-            return
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
         self.showMessageBox('请使用鼠标"右键"进行旋转')
 
     def zoom(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
-        self.cutted_matrix = None
-        if not self.main_polygon:
-            self.showMessageBox('请先输入主多边形')
-            self.paint_area.repaint()
-            return
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
         self.showMessageBox('请使用鼠标"滚轮"进行缩放')
 
     def flip(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
-        self.cutted_matrix = None
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
         if not self.main_polygon:
             self.showMessageBox('请先输入主多边形')
             self.paint_area.repaint()
             return
         center = self.center_point
-        for point in self.main_polygon.vertices:
+        points = self.main_polygon.vertices
+        if self.cutted:
+            points.extend(self.cutter_polygon.vertices)
+        for point in points:
             point.setX(2 * center.x() - point.x())
         self.paint_area.repaint()
 
@@ -383,7 +376,7 @@ class PLGMainWidget(QWidget):
 
     def select_center(self):
         if self.state != PLGState.NORMAL:
-            return self.showMessageBox('非法操作')
+            return self.showMessageBox('请您先完成当前动作（Enter结束输入）')
         self.showMessageBox('请单击鼠标"中键"选择中心点')
 
     def paint_area_mousePressEvent(self, event):
@@ -407,7 +400,6 @@ class PLGMainWidget(QWidget):
             self.paint_area.repaint()
         elif self.state == PLGState.NORMAL:
             if event.button() == Qt.LeftButton:
-                self.cutted_matrix = None
                 if not self.main_polygon:
                     self.showMessageBox('请先输入主多边形')
                     self.paint_area.repaint()
@@ -415,9 +407,10 @@ class PLGMainWidget(QWidget):
                 self.state = PLGState.MOVE
                 self.orig_mouse_point = Point(x, y)
                 self.orig_main_polygon = self.main_polygon.copy()
+                if self.cutted:
+                    self.orig_cutter_polygon = self.cutter_polygon.copy()
                 self.paint_area.repaint()
             elif event.button() == Qt.RightButton:
-                self.cutted_matrix = None
                 if not self.main_polygon:
                     self.showMessageBox('请先输入主多边形')
                     self.paint_area.repaint()
@@ -425,6 +418,8 @@ class PLGMainWidget(QWidget):
                 self.state = PLGState.ROTATE
                 self.orig_mouse_point = Point(x, y)
                 self.orig_main_polygon = self.main_polygon.copy()
+                if self.cutted:
+                    self.orig_cutter_polygon = self.cutter_polygon.copy()
                 self.paint_area.repaint()
             elif event.button() == Qt.MidButton:
                 self.center_point = Point(x, y)
@@ -446,11 +441,15 @@ class PLGMainWidget(QWidget):
         if self.state == PLGState.MOVE:
             orig_mouse_x = self.orig_mouse_point.x()
             orig_mouse_y = self.orig_mouse_point.y()
-            for orig_point, point in zip(self.orig_main_polygon.vertices,
-                                         self.main_polygon.vertices):
+            orig_points = self.orig_main_polygon.vertices
+            points = self.main_polygon.vertices
+            if self.cutted:
+                orig_points.extend(self.orig_cutter_polygon.vertices)
+                points.extend(self.cutter_polygon.vertices)
+            for orig_point, point in zip(orig_points, points):
                 point.setX(orig_point.x() + (x - self.orig_mouse_point.x()))
                 point.setY(orig_point.y() + (y - self.orig_mouse_point.y()))
-            if (x + y) % 5 == 0 or (x - y) % 5 == 0:  # 每次都 repaint 的话延迟过高
+            if (x + y) % 11 == 0 or (x - y) % 11 == 0:  # 每次都 repaint 的话延迟过高
                 self.paint_area.repaint()
         elif self.state == PLGState.ROTATE:
             orig_mouse_x = self.orig_mouse_point.x()
@@ -461,26 +460,32 @@ class PLGMainWidget(QWidget):
                                        self.orig_mouse_point),
                                   Line(self.center_point,
                                        Point(x, y)))
-            for orig_point, point in zip(self.orig_main_polygon.vertices,
-                                         self.main_polygon.vertices):
+            orig_points = self.orig_main_polygon.vertices
+            points = self.main_polygon.vertices
+            if self.cutted:
+                orig_points.extend(self.orig_cutter_polygon.vertices)
+                points.extend(self.cutter_polygon.vertices)
+            for orig_point, point in zip(orig_points, points):
                 px, py = orig_point.x(), orig_point.y()
                 point.setX(ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy))
                 point.setY(oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy))
-            if (x + y) % 5 == 0 or (x - y) % 5 == 0:  # 每次都 repaint 的话延迟过高
+            if (x + y) % 11 == 0 or (x - y) % 11 == 0:  # 每次都 repaint 的话延迟过高
                 self.paint_area.repaint()
 
     def paint_area_wheelEvent(self, event):
         if self.state != PLGState.NORMAL:
-            self.showMessageBox('非法操作')
+            self.showMessageBox('请您先完成当前动作（Enter结束输入）')
             return
-        self.cutted_matrix = None
         if not self.main_polygon:
             self.showMessageBox('请先输入主多边形')
             self.paint_area.repaint()
             return
         factor = 1.1 if event.angleDelta().y() > 0 else 0.91
         center = self.center_point
-        for point in self.main_polygon.vertices:
+        points = self.main_polygon.vertices
+        if self.cutted:
+            points.extend(self.cutter_polygon.vertices)
+        for point in points:
             point.setX(center.x() + factor * (point.x() - center.x()))
             point.setY(center.y() + factor * (point.y() - center.y()))
         self.paint_area.repaint()

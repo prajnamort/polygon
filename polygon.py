@@ -102,6 +102,7 @@ class PLGMainWidget(QWidget):
         self.main_polygon = None
         self.cutter_polygon = None
         self.cutted_matrix = None
+        self.center_point = None
         self.state = PLGState.NORMAL
         self.current_color = QColor('#ebc9ff')
         self.initUI()
@@ -188,8 +189,6 @@ class PLGMainWidget(QWidget):
         self.btn_main_outer.clicked.connect(self.input_main_outer)
         self.btn_main_inner = QPushButton('增加内环')
         self.btn_main_inner.clicked.connect(self.input_main_inner)
-        self.btn_main_color = QPushButton('选择颜色')
-        self.btn_main_color.clicked.connect(self.select_color)
 
         label1_2 = QLabel('裁剪多边形：')
         label1_2.setMinimumWidth(100)
@@ -200,8 +199,8 @@ class PLGMainWidget(QWidget):
         self.btn_cut = QPushButton('开始裁剪')
         self.btn_cut.clicked.connect(self.cut)
 
-        label2 = QLabel('其它操作：')
-        label2.setMinimumWidth(100)
+        label2_1 = QLabel('其它操作：')
+        label2_1.setMinimumWidth(100)
         self.btn_move = QPushButton('平移')
         self.btn_move.clicked.connect(self.move)
         self.btn_rotate = QPushButton('旋转')
@@ -211,11 +210,17 @@ class PLGMainWidget(QWidget):
         self.btn_flip = QPushButton('翻转')
         self.btn_flip.clicked.connect(self.flip)
 
+        label2_2 = QLabel('设置：')
+        label2_2.setMinimumWidth(100)
+        self.btn_main_color = QPushButton('选择颜色')
+        self.btn_main_color.clicked.connect(self.select_color)
+        self.btn_select_center = QPushButton('选择中心点')
+        self.btn_select_center.clicked.connect(self.select_center)
+
         hbox1 = QHBoxLayout()
         hbox1.addWidget(label1_1)
         hbox1.addWidget(self.btn_main_outer)
         hbox1.addWidget(self.btn_main_inner)
-        hbox1.addWidget(self.btn_main_color)
         hbox1.addStretch(1)
         hbox1.addSpacing(100)
         hbox1.addWidget(label1_2)
@@ -224,12 +229,17 @@ class PLGMainWidget(QWidget):
         hbox1.addWidget(self.btn_cut)
         hbox1.addSpacing(100)
         hbox2 = QHBoxLayout()
-        hbox2.addWidget(label2)
+        hbox2.addWidget(label2_1)
         hbox2.addWidget(self.btn_move)
         hbox2.addWidget(self.btn_rotate)
         hbox2.addWidget(self.btn_zoom)
         hbox2.addWidget(self.btn_flip)
         hbox2.addStretch(1)
+        hbox2.addSpacing(100)
+        hbox2.addWidget(label2_2)
+        hbox2.addWidget(self.btn_main_color)
+        hbox2.addWidget(self.btn_select_center)
+        hbox2.addSpacing(100)
         vbox = QVBoxLayout()
         vbox.addLayout(hbox1)
         vbox.addLayout(hbox2)
@@ -253,11 +263,20 @@ class PLGMainWidget(QWidget):
             fill_matrix(self.paint_area, self.cutted_matrix,
                         painter=painter, color=self.current_color)
         else:
-            if self.main_polygon:
+            if self.main_polygon is not None:
                 fill_polygon(self.paint_area, self.main_polygon,
                              painter=painter, color=self.current_color)
-            if self.cutter_polygon:
+            if self.cutter_polygon is not None:
                 self.cutter_polygon.draw(painter=painter, color=Qt.black)
+        if self.center_point is None:
+            print(self.paint_area.width(), self.paint_area.height())
+            self.center_point = Point(self.paint_area.width()/2, self.paint_area.height()/2)
+        pen = QPen(Qt.red)
+        pen.setWidth(8)
+        pen.setCapStyle(Qt.RoundCap)
+        painter.setPen(pen)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.drawPoint(self.center_point)
 
     def input_main_outer(self):
         if self.state != PLGState.NORMAL:
@@ -275,13 +294,6 @@ class PLGMainWidget(QWidget):
         self.cutted_matrix = None
         self.state = PLGState.INPUT_MAIN_INNER
         self.main_polygon.insert_inner(PlainPolygon())
-        self.paint_area.repaint()
-
-    def select_color(self):
-        color = QColorDialog.getColor()
-        if color.isValid():
-            self.current_color = color
-            self.showMessage('输入颜色：%s' % color.name())
         self.paint_area.repaint()
 
     def input_cutter_outer(self):
@@ -358,10 +370,22 @@ class PLGMainWidget(QWidget):
             self.showMessageBox('请先输入主多边形')
             self.paint_area.repaint()
             return
-        center = self.main_polygon.center
+        center = self.center_point
         for point in self.main_polygon.vertices:
             point.setX(2 * center.x() - point.x())
         self.paint_area.repaint()
+
+    def select_color(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.current_color = color
+            self.showMessage('输入颜色：%s' % color.name())
+        self.paint_area.repaint()
+
+    def select_center(self):
+        if self.state != PLGState.NORMAL:
+            return self.showMessageBox('非法操作')
+        self.showMessageBox('请单击鼠标"中键"选择中心点')
 
     def paint_area_mousePressEvent(self, event):
         x = event.x()
@@ -402,7 +426,9 @@ class PLGMainWidget(QWidget):
                 self.state = PLGState.ROTATE
                 self.orig_mouse_point = Point(x, y)
                 self.orig_main_polygon = self.main_polygon.copy()
-                self.orig_main_center = self.orig_main_polygon.center
+                self.paint_area.repaint()
+            elif event.button() == Qt.MidButton:
+                self.center_point = Point(x, y)
                 self.paint_area.repaint()
 
     def paint_area_mouseReleaseEvent(self, event):
@@ -430,11 +456,11 @@ class PLGMainWidget(QWidget):
         elif self.state == PLGState.ROTATE:
             orig_mouse_x = self.orig_mouse_point.x()
             orig_mouse_y = self.orig_mouse_point.y()
-            ox = self.orig_main_center.x()
-            oy = self.orig_main_center.y()
-            angle = angle_between(Line(self.orig_main_center,
+            ox = self.center_point.x()
+            oy = self.center_point.y()
+            angle = angle_between(Line(self.center_point,
                                        self.orig_mouse_point),
-                                  Line(self.orig_main_center,
+                                  Line(self.center_point,
                                        Point(x, y)))
             for orig_point, point in zip(self.orig_main_polygon.vertices,
                                          self.main_polygon.vertices):
@@ -454,7 +480,7 @@ class PLGMainWidget(QWidget):
             self.paint_area.repaint()
             return
         factor = 1.1 if event.angleDelta().y() > 0 else 0.91
-        center = self.main_polygon.center
+        center = self.center_point
         for point in self.main_polygon.vertices:
             point.setX(center.x() + factor * (point.x() - center.x()))
             point.setY(center.y() + factor * (point.y() - center.y()))

@@ -367,6 +367,7 @@ class PLGMainWidget(QWidget):
         x = event.x()
         y = event.y()
         if self.state == PLGState.INPUT_MAIN_OUTER:
+            success, message = self.main_polygon.outer.insert(-1, Point(x, y))
             self.showMessage(message)
             self.paint_area.repaint()
         elif self.state == PLGState.INPUT_MAIN_INNER:

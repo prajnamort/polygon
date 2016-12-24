@@ -269,7 +269,6 @@ class PLGMainWidget(QWidget):
             if self.cutter_polygon is not None:
                 self.cutter_polygon.draw(painter=painter, color=Qt.black)
         if self.center_point is None:
-            print(self.paint_area.width(), self.paint_area.height())
             self.center_point = Point(self.paint_area.width()/2, self.paint_area.height()/2)
         pen = QPen(Qt.red)
         pen.setWidth(8)

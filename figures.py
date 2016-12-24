@@ -117,21 +117,6 @@ class PlainPolygon(object):
         if point in self.vertices:
             return False, '输入失败：顶点不允许重合'
 
-        # if self.n >= 2:
-        #     pairs = [(Line(self.vertices[-1], point), self.vertices[-1]),
-        #              (Line(point, self.vertices[0]), self.vertices[0])]
-        # elif self.n == 1:
-        #     pairs = [(Line(self.vertices[-1], point), self.vertices[-1])]
-        # else:
-        #     pairs = []
-
-        # for line, vertice in pairs:
-        #     for side in self.sides:
-        #         intersect_point = Point()
-        #         intersect_type = side.intersect(line, intersect_point)
-        #         if intersect_type == QLineF.BoundedIntersection:
-        #             pass  # TMP
-
         self.vertices.insert(index, point)
         return True, '输入成功：%s' % point
 
